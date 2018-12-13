@@ -100,8 +100,7 @@ void histogram_generate(unsigned char **in, int * hist)
 unsigned char extract(unsigned char data, int i) {
 	return (data >> i) & 1;
 }
-int main(void)
-{
+int encode() {
 	unsigned char** in_data = mem_alloc2_d(X_MAX, Y_MAX, 0);
 	// 이미지를 읽어온다
 
@@ -180,8 +179,48 @@ int main(void)
 		writeFile.close();
 	}
 
+
+
+	bitset<8> b0;
+	FILE* huf_out = fopen("huffman.data", "w+b");
+	for (int k = 0; k < saved_vector.size() / 8; k++)
+	{
+
+		for (int i = 0; i < 8; i++)
+		{
+			b0[i] = saved_vector[i + k * 8];
+
+		}
+
+		unsigned char  a = b0.to_ulong();
+
+		fwrite(&a, sizeof(unsigned char), 1, huf_out);
+	}
+
+	for (int i = 0; i < saved_vector.size() % 8; i++)
+	{
+		b0[i] = saved_vector[i + saved_vector.size() - 8];
+
+	}
+	for (int i = 0; i < 8 - saved_vector.size() % 8; i++)
+	{
+		b0[i] = 0;
+
+	}
+	unsigned char  a = b0.to_ulong();
+	fwrite(&a, sizeof(unsigned char), 1, huf_out);
+
+	fclose(huf_out);
+	std::cout << test_count << endl;
+
+	return 0;
+}
+int decode() {
+
+	string filePath = "huffman_table.txt";
+
 	// read File
-	vector<int> adj_test[256];
+	vector<int> adj[256];
 	int open_index = 0;
 	ifstream openFile(filePath.data());
 	if (openFile.is_open()) {
@@ -191,67 +230,37 @@ int main(void)
 			{
 				for (int i = 0; i < line.size(); i++)
 				{
-					adj_test[open_index].push_back(line[i]);
+					adj[open_index].push_back(line[i]-48);
 				}
 
 			}
 			open_index++;
 
-			
+
 		}
 		openFile.close();
 	}
-
-	bitset<8> b0;
-	FILE* huf_out = fopen("huffman.data", "w+b");
-	for (int k = 0; k < saved_vector.size()/8; k++)
-	{
-
-			for (int i = 0; i < 8; i++)
-			{
-				b0[i] = saved_vector[i+k*8];
-
-			}
-		
-		unsigned char  a = b0.to_ulong();
-
-		fwrite(&a, sizeof(unsigned char), 1, huf_out);
-	}
-	
-		for (int i = 0; i < saved_vector.size() % 8; i++)
-		{
-			b0[i] = saved_vector[i+ saved_vector.size()-8];
-
-		}
-		for (int i = 0; i < 8- saved_vector.size() % 8; i++)
-		{
-			b0[i] = 0;
-
-		}
-		unsigned char  a = b0.to_ulong();
-		fwrite(&a, sizeof(unsigned char), 1, huf_out);
-
-	fclose(huf_out);
-
 	FILE* huf_in = fopen("huffman.data", "rb");//file input
-	if (in == NULL)
+	if (huf_in == NULL)
 	{
 		printf("File not found!!\n");
 		return 0;
 	}
 	unsigned char test;
-	saved_vector.clear();//초기화 해보고 다시 가보자
+	//saved_vector.clear();//초기화 해보고 다시 가보자
+	vector<int> saved_vector;//이걸 array로 하면 빨라서 좋을거 같기도하다.
+
 	char bit[8];
 
-	while ( fread(&test, sizeof(char), 1, huf_in) ==1){
+	while (fread(&test, sizeof(char), 1, huf_in) == 1) {
 		for (int i = 0; i < 8; i++) {
 			bit[i] = extract(test, i);
 			saved_vector.push_back(bit[i]);
 		}
 	}
-	
+
 	fclose(huf_in);
-	
+
 
 
 	//saved vector를 write 해야하고
@@ -263,7 +272,7 @@ int main(void)
 	int my_index = 0;
 	unsigned char** out_data = mem_alloc2_d(X_MAX, Y_MAX, 0);
 
-	while (count<256*256)
+	while (count < 256 * 256)
 	{
 		temp_vector.push_back(saved_vector[my_index]);
 		my_index++;
@@ -296,7 +305,6 @@ int main(void)
 			}
 		}
 	}
-	std::cout << test_count << endl;
 	std::cout << count << endl;
 	FILE* outfile = fopen("output.raw", "w+b");
 
@@ -304,5 +312,13 @@ int main(void)
 	{
 		fwrite(out_data[i], sizeof(unsigned char), 256, outfile);
 	}
+	return 0;
+}
+int main(void)
+{
+	printf("encode start\n");
+	encode();
+	printf("decode start\n");
+	decode();
 	return 0;
 }
