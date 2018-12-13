@@ -5,6 +5,7 @@
 #include <bitset>  
 #include <fstream>
 #include <iostream>
+#include <map>
 
 #include"HuffmanCodes.h"
 using namespace std;
@@ -218,6 +219,7 @@ int encode() {
 int decode() {
 
 	string filePath = "huffman_table.txt";
+	map< string, int > m;
 
 	// read File
 	vector<int> adj[256];
@@ -231,6 +233,9 @@ int decode() {
 				for (int i = 0; i < line.size(); i++)
 				{
 					adj[open_index].push_back(line[i]-48);
+					m.insert(make_pair(line, open_index));
+
+
 				}
 
 			}
@@ -271,39 +276,59 @@ int decode() {
 	bool oh = true;
 	int my_index = 0;
 	unsigned char** out_data = mem_alloc2_d(X_MAX, Y_MAX, 0);
+	string temp_string = "";
+	map< string, int, greater<int>>::iterator iter;
+
 
 	while (count < 256 * 256)
 	{
 		temp_vector.push_back(saved_vector[my_index]);
+		temp_string.append(to_string(saved_vector[my_index]));
 		my_index++;
-		/*pop_front(saved_vector);*/
-		for (int i = 0; i < 256; i++)
+		iter = m.find(temp_string);
+		if (iter != m.end())
 		{
-			if (temp_vector.size() == adj[i].size())
-			{
-				for (int j = 0; j < temp_vector.size(); j++)
-				{
+			out_data[count / 256][count % 256] = iter->second;
 
-					if (temp_vector[j] != adj[i][j])
-					{
-						break;
-					}
-					if (j == temp_vector.size() - 1)//마지막꺼 까지 같을때
-					{
-						out_data[count / 256][count % 256] = i;
-						count++;
-						temp_vector.clear();
-						oh = false;//2중 for문 탈출
-						break;
-					}
-				}
-				if (oh == false)
-				{
-					oh = true;
-					break;
-				}
-			}
+			count++;
+			temp_string = "";
 		}
+
+
+		/*cout << "test";*/
+
+
+		/*pop_front(saved_vector);*/
+		//for (int i = 0; i < 256; i++)
+		//{
+		//	if (adj[i].size() == 0)//continue
+		//		continue;
+		//	if (temp_vector.size() == adj[i].size())
+		//	{
+		//		for (int j = 0; j < temp_vector.size(); j++)
+		//		{
+
+		//			if (temp_vector[j] != adj[i][j])
+		//			{
+		//				break;
+		//			}
+		//			if (j == temp_vector.size() - 1)//마지막꺼 까지 같을때
+		//			{
+		//				out_data[count / 256][count % 256] = i;
+
+		//				count++;
+		//				temp_vector.clear();
+		//				oh = false;//2중 for문 탈출
+		//				break;
+		//			}
+		//		}
+		//		if (oh == false)
+		//		{
+		//			oh = true;
+		//			break;
+		//		}
+		//	}
+		//}
 	}
 	std::cout << count << endl;
 	FILE* outfile = fopen("output.raw", "w+b");
